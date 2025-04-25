@@ -174,11 +174,76 @@
     
     <h1>菲菲公组 | 知识问答·智能触手可及</h1>
     
+    <!-- 删除搜索容器 -->
     <div class="search-container">
-        <input type="text" placeholder="输入你的问题...">
-        <button>搜索</button>
+        <input type="text" id="searchInput">
+        <button onclick="search()">搜索</button>
     </div>
 
+    <!-- 在原有脚本后添加语音功能 -->
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        let recognition;
+    
+        // 初始化语音识别
+        function initSpeech() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.lang = 'zh-CN';
+                recognition.interimResults = false;
+                recognition.continuous = false;
+    
+                recognition.onstart = () => {
+                    searchInput.style.border = '2px solid #ff6b6b';
+                    searchInput.placeholder = '正在聆听...';
+                }
+    
+                recognition.onresult = (e) => {
+                    const transcript = e.results[0][0].transcript;
+                    searchInput.value = transcript;
+                    searchInput.style.border = 'none';
+                    searchInput.placeholder = '输入你的问题...';
+                }
+    
+                recognition.onerror = (e) => {
+                    console.error('识别错误:', e.error);
+                    searchInput.style.border = 'none';
+                    searchInput.placeholder = '识别失败，请点击重试...';
+                }
+    
+                recognition.onend = () => {
+                    searchInput.style.border = 'none';
+                    searchInput.placeholder = '输入你的问题...';
+                }
+            } else {
+                searchInput.placeholder = '该浏览器不支持语音输入';
+            }
+        }
+    
+        // 初始化语音功能
+        initSpeech();
+    
+        function startRecording() {
+            if (recognition) {
+                recognition.start();
+            }
+        }
+    </script>
+
+    <style>
+        /* 添加输入框录音状态样式 */
+        #searchInput {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        #searchInput:focus {
+            box-shadow: 0 0 10px rgba(255,107,107,0.3);
+        }
+        #searchInput::placeholder {
+            color: #666;
+            transition: color 0.3s;
+        }
+    </style>
     <div class="container">
         <div class="card">
             <div class="icon">
@@ -193,24 +258,53 @@
             <div class="description">提供准确、全面的回答，帮助用户解决问题。</div>
         </div>
 
-        <div class="card">
+        <!-- 修改语音输入卡片部分 -->
+        <div class="card" onclick="startRecording()" style="cursor: pointer;">
             <div class="icon">
                 <div class="icon-placeholder">
                     <svg t="1745379216117" class="svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
                         <path d="M740.131548 126.974413C658.238172 45.106636 549.375533 0 433.56258 0S208.874189 45.093836 126.993613 126.974413C45.100236 208.880589 0.0064 317.756028 0.0064 433.56898c0 115.812952 45.093836 224.675592 126.974413 306.568968 81.893376 81.880576 190.781615 126.974413 306.581767 126.974413 115.812952 0 224.675592-45.093836 306.568968-126.974413 81.893376-81.893376 126.987213-190.756016 126.987213-306.568968s-45.093836-224.688391-126.974413-306.568968zM433.56258 784.374195c-193.443982 0-350.830815-157.374033-350.830814-350.818014 0-193.443982 157.386833-350.830815 350.830814-350.830815S784.393395 240.124998 784.393395 433.556181 627.006562 784.374195 433.536981 784.374195z m578.322371 168.996288L739.96515 681.463482a41.369083 41.369083 0 1 0-58.495268 58.495269l271.907001 271.919801c8.076699 8.089499 18.662167 12.121448 29.247634 12.121448a41.369083 41.369083 0 0 0 29.247635-70.616717z" fill="#1700FF"></path>
                     </svg>
                 </div>
-                <img src="https://losegrip.github.io/pj/22.png" alt="在线搜索" class="hover-image" />
+                <img src='https://losegrip.github.io/pj/22.png' alt="语音输入" class="hover-image" />
             </div>
-            <div class="title">在线搜索</div>
-            <div class="description">实时获取最新信息，以确保答案的时效性和相关性。</div>
+            <div class="title">语音输入</div>
+            <div class="description">点击此处开始语音输入</div>
         </div>
 
-        <div class="card">
-            <div class="icon">
-                <div class="icon-placeholder">
-                    <svg t="1745379230267" class="svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M877.592019 0H145.868745C65.437523 0 0 65.437523 0 145.868745v731.723274C0 958.023242 65.437523 1023.460764 145.868745 1023.460764h731.723274C958.023242 1023.460764 1023.460764 958.023242 1023.460764 877.592019V145.868745C1023.460764 65.437523 958.023242 0 877.592019 0z m63.185909 877.592019a63.262668 63.262668 0 0 1-63.198703 63.185909H145.881539a63.262668 63.262668 0 0 1-63.185909-63.198703V145.881539a63.262668 63.262668 0 0 1 63.198702-63.185909h731.71048a63.262668 63.262668 0 0 1 63.185909 63.198702v731.71048zM328.78677 209.041861c-66.026013 0-119.744909 53.73169-119.744909 119.744909 0 66.026013 53.73169 119.744909 119.744909 119.74491 66.026013 0 119.744909-53.718897 119.74491-119.74491s-53.718897-119.744909-119.74491-119.744909z m0 156.806982a37.100453 37.100453 0 0 1-37.049279-37.062073 37.100453 37.100453 0 0 1 37.049279-37.049279 37.100453 37.100453 0 0 1 37.062073 37.049279 37.100453 37.100453 0 0 1-37.062073 37.062073zM1011.345547 639.27918L750.030428 377.96406a41.347815 41.347815 0 0 0-58.465196 0l-574.929085 574.929084a41.347815 41.347815 0 1 0 58.465196 58.465197l545.696487-545.696487 232.082521 232.095315a41.347815 41.347815 0 1 0 58.465196-58.465196z" fill="#1700FF"></path>
+        <!-- 在脚本部分添加搜索框引用 -->
+        <script>
+            function startRecording() {
+                const searchInput = document.querySelector('.search-container input');
+                if (recognition && searchInput) {
+                    recognition.start();
+                    searchInput.placeholder = '请输入你的问题...';
+                }
+            }
+
+            // 修改原有录音结果处理
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                const searchInput = document.querySelector('.search-container input');
+                if (searchInput) {
+                    searchInput.value = transcript;
+                    searchInput.placeholder = '输入你的问题...';
+                }
+            }
+        </script>
+
+        <style>
+            /* 添加卡片点击效果 */
+            .card[onclick]:hover {
+                transform: scale(1.02);
+                box-shadow: 0 8px 16px rgba(255,107,107,0.2);
+            }
+        </style>
+    <div class="card">
+        <div class="icon">
+            <div class="icon-placeholder">
+                <svg t="1745379230267" class="svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M915.9424 341.5552L587.968 12.1216A41.088 41.088 0 0 0 558.848 0H230.8864C156.5184 0 96 60.7872 96 135.488v753.024C96 963.2 156.5056 1024 230.8864 1024h562.2272c74.368 0 134.8864-60.7872 134.8864-135.488V370.8032a41.472 41.472 0 0 0-12.0576-29.248z m-70.2976 546.944c0 29.1072-23.5648 52.7744-52.5312 52.7744H230.8864c-28.9664 0-52.5312-23.68-52.5312-52.7616v-753.024c0-29.0944 23.5648-52.7616 52.5312-52.7616h310.912l303.8464 305.216v500.5696z m41.1776-559.0528H600.0256V41.3696A41.2672 41.2672 0 0 0 558.848 0a41.2672 41.2672 0 0 0-41.1776 41.3696v329.4336a41.2672 41.2672 0 0 0 41.1776 41.3696h327.9744a41.2672 41.2672 0 0 0 41.1776-41.3696 41.2672 41.2672 0 0 0-41.1776-41.3568z" fill="#1700FF"></path>
                     </svg>
                 </div>
                 <img src="https://losegrip.github.io/pj/33.png" alt="AI绘图" class="hover-image" />
@@ -233,7 +327,6 @@
         </a>
         </div>
 
-
     </div>
 
     <footer>
@@ -243,3 +336,13 @@
 </body>
 
 </html>
+
+
+
+<script>
+function search() {
+    const query = document.getElementById('searchInput').value;
+    window.location.href = `search.html?query=${encodeURIComponent(query)}`;
+}
+</script>
+
