@@ -23,7 +23,7 @@
             left: 50%; /* 水平居中 */
             width: 1400px; /* 背景图容器宽度 */
             height: 400px; /* 背景图容器高度 */
-            background-image: url('https://losegrip.github.io/pj/bck.png'); /* 本地文件路径 */
+            background-image: url('https://losegrip.github.io/pj/bck.png'); 
             background-size: cover; /* 背景图铺满容器 */
             background-position: center; /* 背景图居中 */
             border-radius: 20px; /* 圆角 */
@@ -174,11 +174,17 @@
     
     <h1>菲菲公组 | 知识问答·智能触手可及</h1>
     
-    <!-- 删除搜索容器 -->
+    <!-- 搜索容器 -->
     <div class="search-container">
-        <input type="text" id="searchInput">
+        <input type="text" id="searchInput" placeholder="输入你的消息...">
         <button onclick="search()">搜索</button>
     </div>
+    <script>
+        function search() {
+            // 示例：跳转到指定网页（无需查询参数）
+            window.location.href = "https://losegrip.github.io/pj/GPT.html"; // 替换为您想跳转的网页
+        }
+    </script>
 
     <!-- 在原有脚本后添加语音功能 -->
     <script>
