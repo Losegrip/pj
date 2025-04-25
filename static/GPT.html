@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT对话框</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f1f1;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333; /* 改变标题颜色 */
+        }
+
+        #chatbox {
+            background-color: #fff; /* 使用白色背景以便更明显的边框 */
+            border-radius: 15px; /* 圆角效果 */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* 加强阴影效果 */
+            padding: 20px;
+            max-width: 700px;
+            margin: auto;
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 100px; /* 减少底部边距 */
+            border: 2px solid #007bff; /* 明显的边框颜色 */
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 15px; /* 增加内边距 */
+            border-radius: 10px; /* 圆角效果 */
+            max-width: 80%; /* 最大宽度限制 */
+            overflow-wrap: break-word; /* 换行 */
+        }
+
+        .user {
+            background-color: #d1e7dd;
+            text-align: right;
+            margin-left: auto; /* 向右对齐 */
+        }
+
+        .gpt {
+            background-color: #f8d7da;
+            text-align: left;
+            margin-right: auto; /* 向左对齐 */
+        }
+
+        #inputArea {
+            display: flex;
+            justify-content: center; /* 居中对齐 */
+            margin-top: 10px;
+        }
+
+        #userInput {
+            flex-grow: 1;
+            padding: 15px; /* 增加内边距以增大高度 */
+            border-radius: 10px; /* 圆角效果 */
+            border: 2px solid #007bff; /* 明显的边框颜色 */
+            margin-right: 10px; /* 增加右侧边距 */
+            min-width: 800px; /* 设置最小宽度 */
+            max-width: 600px; /* 设置最大宽度 */
+            height: 50px; /* 增加高度 */
+            font-size: 16px; /* 增大字体 */
+        }
+
+        #submitButton {
+            padding: 15px 20px; /* 增加内边距以增大按钮 */
+            border: none;
+            border-radius: 10px; /* 圆角效果 */
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px; /* 增大字体 */
+            transition: background-color 0.3s; /* 添加平滑过渡效果 */
+        }
+
+        #submitButton:hover {
+            background-color: #0056b3; /* 悬停时变色 */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>GPT对话框</h1>
+
+    <div id="chatbox"></div>
+
+    <div id="inputArea">
+        <input type="text" id="userInput" placeholder="输入你的消息..." />
+        <button id="submitButton">发送</button>
+    </div>
+
+    <script>
+        document.getElementById("submitButton").onclick = async function () {
+            const userInput = document.getElementById("userInput").value;
+
+            if (userInput.trim() === "") return;
+
+            // 显示用户消息
+            const chatbox = document.getElementById("chatbox");
+            const userMessage = document.createElement("div");
+            userMessage.className = "message user";
+            userMessage.innerText = userInput;
+            chatbox.appendChild(userMessage);
+
+            // 清空输入框
+            document.getElementById("userInput").value = "";
+
+            // 发送请求到后端
+            try {
+                const response = await fetch('/api/run_model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: userInput })
+                });
+
+                const data = await response.json();
+
+                // 显示模型的回应
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    const gptMessage = document.createElement("div");
+                    gptMessage.className = "message gpt";
+                    gptMessage.innerText = data.response;
+                    chatbox.appendChild(gptMessage);
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+            }
+
+            // 滚动到底部
+            chatbox.scrollTop = chatbox.scrollHeight;
+        };
+    </script>
+</body>
+
+</html>
