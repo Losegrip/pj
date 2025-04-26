@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT对话框</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        #container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #history {
+            width: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-left: 20px;
+        }
+
+        #chatbox {
+            flex: 1;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            height: 600px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            max-width: 80%;
+            overflow-wrap: break-word;
+        }
+
+        .user {
+            background-color: #d1e7dd;
+            text-align: right;
+            margin-left: auto;
+        }
+
+        .gpt {
+            background-color: #f8d7da;
+            text-align: left;
+            margin-right: auto;
+        }
+
+        #inputArea {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        #userInput {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #007bff;
+            margin-right: 10px;
+            height: 40px;
+            font-size: 16px;
+        }
+
+        #submitButton, #newSessionButton {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #submitButton:hover, #newSessionButton:hover {
+            background-color: #0056b3;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 10px;
+            color: green;
+            font-weight: bold;
+            display: none; /* 默认隐藏状态提示 */
+        }
+
+        #history h2 {
+            text-align: center;
+            color: #333;
+            margin: 0 0 20px 0;
+        }
+
+        #historyList {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            cursor: pointer;
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .edit-button, .delete-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #007bff;
+        }
+
+        .edit-button:hover, .delete-button:hover {
+            color: #0056b3;
+        }
+        
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #007bff;
+            margin-left: 10px;
+        }
+
+        .icon-button:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="chatbox">
+            <div id="status"></div>
+        </div>
+
+        <div id="history">
+            <h2>历史记录</h2>
+            <button id="newSessionButton">新会话</button>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <div id="inputArea">
+        <input type="text" id="userInput" placeholder="输入你的消息..." />
+        <button id="submitButton">发送</button>
+        <button class="icon-button" id="voiceButton"><i class="fas fa-microphone"></i></button>
+    </div>
+
+    <script>
+        let currentSession = [];
+        let sessionHistory = [];
+    
+        const chatbox = document.getElementById("chatbox");
+        const historyList = document.getElementById("historyList");
+        const statusDiv = document.getElementById("status");
+    
+        document.getElementById("submitButton").onclick = async function () {
+            const userInput = document.getElementById("userInput").value;
+            if (userInput.trim() === "") return; 
+
+            addMessage(userInput, 'user');
+            document.getElementById("userInput").value = ""; // 每次发送后清空输入框
+
+            try {
+                const response = await fetch('/api/run_model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: userInput })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    addMessage(data.response, 'gpt');
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+
+            // 保存当前会话
+            if (currentSession.length > 0) {
+                sessionHistory.push({ messages: [...currentSession], name: `会话 ${sessionHistory.length + 1}` }); 
+                currentSession = []; // 重置当前会话
+            }
+
+            // 更新历史记录列表
+            updateHistoryList();
+        };
+
+        function addMessage(message, type) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "message " + type;
+            messageDiv.innerText = message; 
+            chatbox.appendChild(messageDiv);
+            currentSession.push({ type, message }); 
+            chatbox.scrollTop = chatbox.scrollHeight; 
+        }
+
+        function updateHistoryList() {
+            historyList.innerHTML = ""; // 清空历史记录列表
+
+            sessionHistory.forEach((session, index) => {
+                const historyItem = document.createElement("div");
+                historyItem.className = "session-item";
+                historyItem.innerText = session.name;
+                historyItem.onclick = () => loadSession(index); 
+
+                const editButton = document.createElement("button");
+                editButton.className = "edit-button";
+                editButton.innerHTML = "<i class='fas fa-edit'></i>";
+                editButton.onclick = () => renameSession(index);
+
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "delete-button";
+                deleteButton.innerHTML = "<i class='fas fa-trash'></i>";
+                deleteButton.onclick = () => confirmDeleteSession(index);
+
+                historyItem.appendChild(editButton);
+                historyItem.appendChild(deleteButton);
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function loadSession(sessionIndex) {
+            if (sessionIndex < 0 || sessionIndex >= sessionHistory.length) {
+                console.error("无效的会话索引");
+                return; 
+            }
+
+            // 清空当前会话里的内容，加载之前的内容
+            chatbox.innerHTML = ""; // 清空聊天框
+            sessionHistory[sessionIndex].messages.forEach(msg => addMessage(msg.message, msg.type)); // 加载选择的会话消息
+            
+            // 继续与 GPT 对话
+            document.getElementById("userInput").value = ""; // 清空输入框
+            chatbox.scrollTop = chatbox.scrollHeight; // 滚动到消息底部
+        }
+
+        function renameSession(sessionIndex) {
+            if (sessionIndex < 0 || sessionIndex >= sessionHistory.length) {
+                console.error("无效的会话索引");
+                return; 
+            }
+
+            const newName = prompt("请输入新的会话名称：");
+            if (newName) {
+                sessionHistory[sessionIndex].name = newName;
+                updateHistoryList();
+            }
+        }
+
+        function confirmDeleteSession(sessionIndex) {
+            if (sessionIndex < 0 || sessionIndex >= sessionHistory.length) {
+                console.error("无效的会话索引");
+                return; 
+            }
+
+            const confirmDelete = confirm("您确定要删除这个会话吗？");
+            if (confirmDelete) {
+                deleteSession(sessionIndex);
+            }
+        }
+
+        function deleteSession(sessionIndex) {
+            if (sessionIndex < 0 || sessionIndex >= sessionHistory.length) {
+                console.error("无效的会话索引");
+                return; 
+            }
+
+            sessionHistory.splice(sessionIndex, 1);
+            updateHistoryList();
+            // 如果删除的是当前会话，清空聊天框和输入框
+            if (sessionHistory.length === 0) {
+                chatbox.innerHTML = "";
+                document.getElementById("userInput").value = "";
+            }
+        }
+
+        document.getElementById("voiceButton").onclick = function () {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.onstart = function() {
+                statusDiv.innerText = "正在聆听...";
+                statusDiv.style.display = "block"; // 显示状态提示
+            };
+
+            recognition.onresult = function(event) {
+                const userInput = event.results[0][0].transcript; 
+                document.getElementById("userInput").value = userInput;
+                statusDiv.style.display = "none"; // 语音识别后隐藏状态提示
+            };
+
+            recognition.onerror = function(event) {
+                console.error("语音识别出错:", event.error);
+                statusDiv.innerText = "识别出错，请重试。"; 
+            };
+
+            recognition.onend = function() {
+                statusDiv.style.display = "none"; // 结束时隐藏状态提示
+            };
+
+            recognition.start(); 
+        };
+
+        // 新会话按钮功能
+        document.getElementById("newSessionButton").onclick = function () {
+            currentSession = []; // 重置当前会话
+            chatbox.innerHTML = ""; // 清空聊天内容
+            document.getElementById("userInput").value = ""; 
+            updateHistoryList();
+        };
+    </script>
+</body>
+
+</html>
